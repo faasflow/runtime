@@ -44,13 +44,13 @@ func newRequestHandlerWrapper(runtime runtimepkg.Runtime, handler func(*runtimep
 
 		ex, err := runtime.CreateExecutor(request)
 		if err != nil {
-			handleError(w, fmt.Sprintf("failed to execute request "+id))
+			handleError(w, fmt.Sprintf("failed to execute request "+id+", error: "+err.Error()))
 			return
 		}
 
 		err = handler(response, request, ex)
 		if err != nil {
-			handleError(w, fmt.Sprintf("request failed to be processed. "+err.Error()))
+			handleError(w, fmt.Sprintf("request failed to be processed. error: "+err.Error()))
 			return
 		}
 
