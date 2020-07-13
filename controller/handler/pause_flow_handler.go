@@ -2,20 +2,21 @@ package handler
 
 import (
 	"fmt"
-	"log"
-	"net/http"
-
+	"github.com/faasflow/runtime"
 	"github.com/faasflow/sdk/executor"
+	"log"
 )
 
-func PauseFlowHandler(w http.ResponseWriter, req *http.Request, id string, ex executor.Executor) ([]byte, error) {
-	log.Printf("Pausing flow %s\n", id)
+func PauseFlowHandler(response *runtime.Response, request *runtime.Request, ex executor.Executor) error {
+	log.Printf("Pausing request %s of flow %s\n", request.RequestID, request.FlowName)
 
 	flowExecutor := executor.CreateFlowExecutor(ex, nil)
-	err := flowExecutor.Pause(id)
+	err := flowExecutor.Pause(request.RequestID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to pause request %s, check if request is active", id)
+		return fmt.Errorf("failed to pause request %s, check if request is active", request.RequestID)
 	}
 
-	return []byte("Successfully paused request " + id), nil
+	response.Body = []byte("Successfully paused request " + request.RequestID)
+
+	return nil
 }

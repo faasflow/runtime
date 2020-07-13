@@ -2,21 +2,22 @@ package handler
 
 import (
 	"fmt"
+	"github.com/faasflow/runtime"
 	"log"
-	"net/http"
 
 	"github.com/faasflow/sdk/executor"
 )
 
-func FlowStateHandler(w http.ResponseWriter, req *http.Request, id string, ex executor.Executor) ([]byte, error) {
-	log.Printf("Get flow state: %s\n", id)
+func FlowStateHandler(response *runtime.Response, request *runtime.Request, ex executor.Executor) error {
+	log.Printf("Getting state of flow %s for request: %s\n", request.FlowName, request.RequestID)
 
 	flowExecutor := executor.CreateFlowExecutor(ex, nil)
-	state, err := flowExecutor.GetState(id)
+	state, err := flowExecutor.GetState(request.RequestID)
 	if err != nil {
 		log.Printf(err.Error())
-		return nil, fmt.Errorf("failed to get request state for %s, check if request is active", id)
+		return fmt.Errorf("failed to get request state for %s, check if request is active", request.RequestID)
 	}
 
-	return []byte(state), nil
+	response.Body = []byte(state)
+	return nil
 }

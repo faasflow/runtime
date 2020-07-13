@@ -2,20 +2,21 @@ package handler
 
 import (
 	"fmt"
+	"github.com/faasflow/runtime"
 	"log"
-	"net/http"
 
 	"github.com/faasflow/sdk/executor"
 )
 
-func ResumeFlowHandler(w http.ResponseWriter, req *http.Request, id string, ex executor.Executor) ([]byte, error) {
-	log.Printf("Resuming flow %s\n", id)
+func ResumeFlowHandler(response *runtime.Response, request *runtime.Request, ex executor.Executor) error {
+	log.Printf("Resuming flow %s for request %s\n", request.FlowName, request.RequestID)
 
 	flowExecutor := executor.CreateFlowExecutor(ex, nil)
-	err := flowExecutor.Resume(id)
+	err := flowExecutor.Resume(request.RequestID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resume request %s, check if request is active", id)
+		return fmt.Errorf("failed to resume request %s, check if request is active", request.RequestID)
 	}
 
-	return []byte("Successfully resumed request " + id), nil
+	response.Body = []byte("Successfully resumed request " + request.RequestID)
+	return nil
 }

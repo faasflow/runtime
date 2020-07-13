@@ -1,4 +1,4 @@
-package controller
+package http
 
 import (
 	"github.com/faasflow/runtime/controller/handler"

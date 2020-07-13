@@ -3,33 +3,22 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"github.com/faasflow/runtime/controller/util"
-	"io/ioutil"
-	"log"
-	"net/http"
-
+	"github.com/faasflow/runtime"
 	"github.com/faasflow/sdk/executor"
+	"log"
 )
 
-func PartialExecuteFlowHandler(w http.ResponseWriter, req *http.Request, id string, ex executor.Executor) ([]byte, error) {
-	log.Printf("Requested %s %s\n", req.Method, req.URL)
-	log.Printf("Executing flow %s\n", id)
+func PartialExecuteFlowHandler(response *runtime.Response, request *runtime.Request, ex executor.Executor) error {
+	log.Printf("Partially executing flow %s, for id %s\n", request.FlowName, request.RequestID)
 
 	var stateOption executor.ExecutionStateOption
 
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		return nil, err
+	if request.RequestID == "" {
+		return errors.New("request ID must be set in partial request")
 	}
-
-	callbackURL := req.Header.Get(util.CallbackUrlHeader)
-
-	if id == "" {
-		return nil, errors.New("request ID not set in partial request")
-	}
-	partialState, err := executor.DecodePartialReq(body)
+	partialState, err := executor.DecodePartialReq(request.Body)
 	if err != nil {
-		return nil, errors.New("failed to decode partial state")
+		return errors.New("failed to decode partial state")
 	}
 	stateOption = executor.PartialRequest(partialState)
 
@@ -37,11 +26,10 @@ func PartialExecuteFlowHandler(w http.ResponseWriter, req *http.Request, id stri
 	flowExecutor := executor.CreateFlowExecutor(ex, nil)
 	resp, err := flowExecutor.Execute(stateOption)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute request. %s", err.Error())
+		return fmt.Errorf("failed to execute request. %s", err.Error())
 	}
-	headers := w.Header()
-	headers[util.RequestIdHeader] = []string{flowExecutor.GetReqId()}
-	headers[util.CallbackUrlHeader] = []string{callbackURL}
 
-	return resp, nil
+	response.Body = resp
+
+	return nil
 }

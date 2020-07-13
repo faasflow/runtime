@@ -1,37 +1,38 @@
 package handler
 
 import (
+	"github.com/faasflow/runtime"
 	"github.com/faasflow/runtime/controller/util"
-	"net/http"
 
 	"github.com/faasflow/sdk/executor"
 )
 
-func LegacyRequestHandler(w http.ResponseWriter, r *http.Request, id string, ex executor.Executor) ([]byte, error) {
-	var handler func(http.ResponseWriter, *http.Request, string, executor.Executor) ([]byte, error)
+func LegacyRequestHandler(response *runtime.Response, request *runtime.Request, ex executor.Executor) error {
+	var handler func(response *runtime.Response, request *runtime.Request, ex executor.Executor) error
 
+	id := ""
 	switch {
-	case util.IsDagExportRequest(r.URL.RawQuery):
+	case util.IsDagExportRequest(request.RawQuery):
 		handler = GetDagHandler
 
-	case util.GetPauseRequestID(r.URL.RawQuery) != "":
-		id = util.GetPauseRequestID(r.URL.RawQuery)
+	case util.GetPauseRequestID(request.RawQuery) != "":
+		id = util.GetPauseRequestID(request.RawQuery)
 		handler = PauseFlowHandler
 
-	case util.GetStopRequestID(r.URL.RawQuery) != "":
-		id = util.GetStopRequestID(r.URL.RawQuery)
+	case util.GetStopRequestID(request.RawQuery) != "":
+		id = util.GetStopRequestID(request.RawQuery)
 		handler = StopFlowHandler
 
-	case util.GetResumeRequestID(r.URL.RawQuery) != "":
-		id = util.GetResumeRequestID(r.URL.RawQuery)
+	case util.GetResumeRequestID(request.RawQuery) != "":
+		id = util.GetResumeRequestID(request.RawQuery)
 		handler = ResumeFlowHandler
 
-	case util.GetStateRequestID(r.URL.RawQuery) != "":
-		id = util.GetStateRequestID(r.URL.RawQuery)
+	case util.GetStateRequestID(request.RawQuery) != "":
+		id = util.GetStateRequestID(request.RawQuery)
 		handler = FlowStateHandler
 
 	default:
-		id = r.Header.Get(util.RequestIdHeader)
+		id = request.GetHeader(util.RequestIdHeader)
 		if id == "" {
 			handler = ExecuteFlowHandler
 		} else {
@@ -39,6 +40,6 @@ func LegacyRequestHandler(w http.ResponseWriter, r *http.Request, id string, ex 
 		}
 	}
 
-	body, err := handler(w, r, id, ex)
-	return body, err
+	err := handler(response, request, ex)
+	return err
 }
