@@ -33,6 +33,7 @@ func newRequestHandlerWrapper(runtime runtimepkg.Runtime, handler func(*runtimep
 
 		response := &runtimepkg.Response{}
 		response.RequestID = id
+		response.Header = make(map[string][]string)
 		request := &runtimepkg.Request{
 			Body:      body,
 			Header:    req.Header,
